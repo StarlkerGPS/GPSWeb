@@ -1,1 +1,67 @@
-<h>Hello World</h>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Enviar Ubicación</title>
+</head>
+<body>
+  <h1>Obteniendo y enviando ubicación...</h1>
+  <p id="status">Esperando ubicación...</p>
+
+  <script>
+    // Reemplaza esta URL con tu webhook real
+    const webhookURL = 'https://script.google.com/macros/s/AKfycbwUsmD6qsHdV0dwaO5vl0A4Au8t9f68eM0qpHscUA9D9F5afyeaqxGNN_IgSowradAj/exec';
+
+    function enviarUbicacion(lat, lon) {
+      const ahora = new Date();
+
+      // Extraer hora y fecha en el formato requerido
+      const hora = ahora.toTimeString().split(' ')[0]; // HH:MM:SS
+      const fecha = ahora.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      // Crear objeto en el orden especificado
+      const datos = {
+        hora: hora,
+        fecha: fecha,
+        latitud: lat,
+        longitud: lon
+        
+      };
+
+      fetch(webhookURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datos)
+      })
+      .then(response => {
+        document.getElementById('status').textContent = 'Ubicación enviada correctamente.';
+      })
+      .catch(error => {
+        document.getElementById('status').textContent = 'Error al enviar ubicación.';
+        console.error('Error:', error);
+      });
+    }
+
+    function obtenerUbicacion() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          document.getElementById('status').textContent = `Lat: ${lat}, Lon: ${lon}`;
+          enviarUbicacion(lat, lon);
+        }, (error) => {
+          document.getElementById('status').textContent = 'Error al obtener la ubicación.';
+          console.error('Geolocation error:', error);
+        });
+      } else {
+        document.getElementById('status').textContent = 'Tu navegador no soporta geolocalización.';
+      }
+    }
+
+    // Ejecutar al cargar la página
+    obtenerUbicacion();
+  </script>
+</body>
+</html>
