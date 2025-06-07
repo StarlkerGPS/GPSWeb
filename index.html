@@ -19,13 +19,18 @@
       const url = `${webhookURL}?fecha=${fecha}&hora=${hora}&latitud=${lat}&longitud=${lon}`;
 
     fetch(url)
-    .then(res => res.text())
-    .then(data => {
-      document.getElementById("estado").innerText = "Ubicación enviada correctamente.";
-    })
-    .catch(err => {
-      document.getElementById("estado").innerText = "Error al enviar ubicación: " + err;
-    });
+  .then(res => {
+    if (!res.ok) throw new Error("Respuesta no OK");
+    return res.text();
+  })
+  .then(data => {
+    document.getElementById("estado").innerText = "Ubicación enviada correctamente.";
+  })
+  .catch(err => {
+    console.warn("La ubicación se envió pero ocurrió un error con la respuesta:", err);
+    document.getElementById("estado").innerText = "Ubicación enviada (con advertencia).";
+  });
+
 
     function pedirUbicacion() {
       if ("geolocation" in navigator) {
