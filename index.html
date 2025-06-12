@@ -10,7 +10,7 @@
   </style>
 </head>
 <body>
-  <h2>Mapa Actualizado con Google Sheets</h2>
+  <h2>Ubicación más reciente</h2>
   <div id="map"></div>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap" async defer></script>
@@ -18,7 +18,8 @@
   <script>
     let map;
     let marker;
-    let ultimaFila = 0;
+    let ultimaLat = null;
+    let ultimaLon = null;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
@@ -27,42 +28,57 @@
       });
 
       verificarNuevaFila();
-      setInterval(verificarNuevaFila, 5000); // cada 5 segundos
+      setInterval(verificarNuevaFila, 5000);
     }
 
     function verificarNuevaFila() {
-      const url = "https://docs.google.com/spreadsheets/d/1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw/gviz/tq?tqx=out:json";
+      const sheetURL = "https://docs.google.com/spreadsheets/d/1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw/gviz/tq?tqx=out:json";
 
-      fetch(url)
+      fetch(sheetURL)
         .then(res => res.text())
         .then(data => {
+          // Limpia el envoltorio del formato Google
           const json = JSON.parse(data.substring(47).slice(0, -2));
           const rows = json.table.rows;
-          const totalFilas = rows.length;
 
-          // Solo si hay una nueva fila
-          if (totalFilas > ultimaFila) {
-            const ultima = rows[totalFilas - 1].c;
-            const lat = parseFloat(ultima[2].v);
-            const lon = parseFloat(ultima[3].v);
+          if (rows.length === 0) return;
 
-            const nuevaPos = { lat, lng: lon };
+          // Última fila
+          const ultima = rows[rows.length - 1].c;
 
-            if (marker) {
-              marker.setPosition(nuevaPos);
-            } else {
-              marker = new google.maps.Marker({
-                position: nuevaPos,
-                map: map,
-                title: "Última ubicación"
-              });
-            }
+          const latRaw = ultima[2]?.v;
+          const lonRaw = ultima[3]?.v;
 
-            map.setCenter(nuevaPos);
-            ultimaFila = totalFilas;
+          if (!latRaw || !lonRaw) {
+            console.warn("Lat o Lon no válidos");
+            return;
           }
+
+          const lat = parseFloat(latRaw);
+          const lon = parseFloat(lonRaw);
+
+          if (lat === ultimaLat && lon === ultimaLon) {
+            return; // No hay cambio
+          }
+
+          ultimaLat = lat;
+          ultimaLon = lon;
+
+          const nuevaUbicacion = { lat, lng: lon };
+
+          if (!marker) {
+            marker = new google.maps.Marker({
+              position: nuevaUbicacion,
+              map: map,
+              title: "Última ubicación",
+            });
+          } else {
+            marker.setPosition(nuevaUbicacion);
+          }
+
+          map.setCenter(nuevaUbicacion);
         })
-        .catch(err => console.error("Error leyendo Google Sheet:", err));
+        .catch(err => console.error("Error al obtener datos de Google Sheet:", err));
     }
   </script>
 </body>
