@@ -10,10 +10,11 @@
   </style>
 </head>
 <body>
-  <h2>Ubicación más reciente</h2>
+  <h2>Última Ubicación desde Google Sheets</h2>
   <div id="map"></div>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap" async defer></script>
+  <!-- Carga la API de Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&callback=initMap" async defer></script>
 
   <script>
     let map;
@@ -27,30 +28,30 @@
         center: { lat: 0, lng: 0 },
       });
 
+      // Ejecuta la función cada 5 segundos
       verificarNuevaFila();
       setInterval(verificarNuevaFila, 5000);
     }
 
     function verificarNuevaFila() {
-      const sheetURL = "https://docs.google.com/spreadsheets/d/1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw/gviz/tq?tqx=out:json";
+      const hojaID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
+      const proxyURL = `https://corsproxy.io/?https://docs.google.com/spreadsheets/d/${hojaID}/gviz/tq?tqx=out:json`;
 
-      fetch(sheetURL)
+      fetch(proxyURL)
         .then(res => res.text())
         .then(data => {
-          // Limpia el envoltorio del formato Google
           const json = JSON.parse(data.substring(47).slice(0, -2));
           const rows = json.table.rows;
 
           if (rows.length === 0) return;
 
-          // Última fila
           const ultima = rows[rows.length - 1].c;
 
           const latRaw = ultima[2]?.v;
           const lonRaw = ultima[3]?.v;
 
           if (!latRaw || !lonRaw) {
-            console.warn("Lat o Lon no válidos");
+            console.warn("Latitud o longitud vacía");
             return;
           }
 
@@ -78,7 +79,7 @@
 
           map.setCenter(nuevaUbicacion);
         })
-        .catch(err => console.error("Error al obtener datos de Google Sheet:", err));
+        .catch(err => console.error("Error al leer la hoja:", err));
     }
   </script>
 </body>
