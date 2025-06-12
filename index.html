@@ -1,58 +1,46 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Enviar Ubicación</title>
+  <title>Mapa con Google Maps API</title>
+  <style>
+    /* Estilo para el recuadro del mapa */
+    #map {
+      height: 500px;
+      width: 100%;
+      border: 2px solid #000;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Enviando tu ubicación...</h1>
-  <p id="estado">Esperando ubicación del navegador...</p>
+  <h1>Mi Mapa de Google</h1>
+  <div id="map"></div>
+
+  <!-- Cargar el API de Google Maps con tu API KEY -->
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap"
+    async defer>
+  </script>
 
   <script>
-    // 👇 Reemplaza con tu propia URL del Webhook de Google Apps Script
-    const webhookURL = "https://script.google.com/macros/s/AKfycbyMEhsP6jQfbawiwEczQGWUzVoo1fVF2nHtPanPH6kHX73y1X1bdSpjds6rngTIpCy_/exec";
+    // Función de inicialización del mapa
+    function initMap() {
+      // Coordenadas del centro del mapa (puedes cambiarlas)
+      const centro = { lat: -34.6037, lng: -58.3816 }; // Ej: Buenos Aires
 
-    function enviarUbicacion(lat, lon) {
-      const ahora = new Date();
-      const fecha = ahora.toISOString().split("T")[0]; // yyyy-mm-dd
-      const hora = ahora.toTimeString().split(" ")[0]; // hh:mm:ss
+      // Crear el mapa
+      const mapa = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: centro,
+      });
 
-      const url = `${webhookURL}?fecha=${fecha}&hora=${hora}&latitud=${lat}&longitud=${lon}`;
-
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error("Respuesta no OK");
-          return res.text();
-        })
-        .then(data => {
-          document.getElementById("estado").innerText = "Ubicación enviada correctamente.";
-        })
-        .catch(err => {
-          console.warn("La ubicación se envió pero ocurrió un error con la respuesta:", err);
-          document.getElementById("estado").innerText = "Ubicación enviada (con advertencia).";
-        });
+      // Agregar un marcador
+      const marcador = new google.maps.Marker({
+        position: centro,
+        map: mapa,
+        title: "Ubicación central",
+      });
     }
-
-    function pedirUbicacion() {
-      if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            document.getElementById("estado").innerText = `Ubicación obtenida: ${lat}, ${lon}`;
-            enviarUbicacion(lat, lon);
-          },
-          err => {
-            document.getElementById("estado").innerText = "Error al obtener ubicación: " + err.message;
-          }
-        );
-      } else {
-        document.getElementById("estado").innerText = "Tu navegador no soporta geolocalización.";
-      }
-    }
-
-    // Ejecutar automáticamente
-    pedirUbicacion();
   </script>
 </body>
 </html>
