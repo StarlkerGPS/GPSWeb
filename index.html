@@ -1,45 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mapa con Google Maps API</title>
+  <title>Mapa en Vivo</title>
   <style>
-    /* Estilo para el recuadro del mapa */
     #map {
       height: 500px;
       width: 100%;
-      border: 2px solid #000;
-      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Mi Mapa de Google</h1>
+  <h2>Mapa Actualizado con Google Sheets</h2>
   <div id="map"></div>
 
-  <!-- Cargar el API de Google Maps con tu API KEY -->
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap"
-    async defer>
-  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap" async defer></script>
 
   <script>
-    // Función de inicialización del mapa
+    let map;
+    let marker;
+    let ultimaFila = 0;
+
     function initMap() {
-      // Coordenadas del centro del mapa (puedes cambiarlas)
-      const centro = { lat: -34.6037, lng: -58.3816 }; // Ej: Buenos Aires
-
-      // Crear el mapa
-      const mapa = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: centro,
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: { lat: 0, lng: 0 },
       });
 
-      // Agregar un marcador
-      const marcador = new google.maps.Marker({
-        position: centro,
-        map: mapa,
-        title: "Ubicación central",
-      });
+      verificarNuevaFila();
+      setInterval(verificarNuevaFila, 5000); // cada 5 segundos
+    }
+
+    function verificarNuevaFila() {
+      const url = "https://docs.google.com/spreadsheets/d/1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw/gviz/tq?tqx=out:json";
+
+      fetch(url)
+        .then(res => res.text())
+        .then(data => {
+          const json = JSON.parse(data.substring(47).slice(0, -2));
+          const rows = json.table.rows;
+          const totalFilas = rows.length;
+
+          // Solo si hay una nueva fila
+          if (totalFilas > ultimaFila) {
+            const ultima = rows[totalFilas - 1].c;
+            const lat = parseFloat(ultima[2].v);
+            const lon = parseFloat(ultima[3].v);
+
+            const nuevaPos = { lat, lng: lon };
+
+            if (marker) {
+              marker.setPosition(nuevaPos);
+            } else {
+              marker = new google.maps.Marker({
+                position: nuevaPos,
+                map: map,
+                title: "Última ubicación"
+              });
+            }
+
+            map.setCenter(nuevaPos);
+            ultimaFila = totalFilas;
+          }
+        })
+        .catch(err => console.error("Error leyendo Google Sheet:", err));
     }
   </script>
 </body>
