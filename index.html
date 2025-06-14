@@ -34,46 +34,49 @@
       cargarUltimaUbicacion();
     }
 
-    function cargarUltimaUbicacion() {
-      const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw"; // <--- Sustituye por el ID de tu hoja de cálculo
-      const query = new google.visualization.Query(
-        `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=Ubicacion`
-      );
+function cargarUltimaUbicacion() {
+  const sheetID = "TU_ID_DE_HOJA"; // <-- Reemplaza
+  const query = new google.visualization.Query(
+    `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=Ubicacion`
+  );
 
-      query.send(function (response) {
-        if (response.isError()) {
-          console.error("Error al obtener datos: " + response.getMessage());
-          return;
-        }
-
-        const data = response.getDataTable();
-        const numFilas = data.getNumberOfRows();
-
-        if (numFilas === 0) {
-          console.warn("No hay datos en la hoja.");
-          return;
-        }
-
-        const i = numFilas - 1; // Última fila
-        const fecha = data.getValue(i, 0);
-        const hora = data.getValue(i, 1);
-        const lat = parseFloat(data.getValue(i, 2));
-        const lng = parseFloat(data.getValue(i, 3));
-
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const posicion = { lat, lng };
-          mapa.setCenter(posicion);
-
-          new google.maps.Marker({
-            position: posicion,
-            map: mapa,
-            title: `${fecha} ${hora}`,
-          });
-        } else {
-          console.warn("Latitud o longitud inválida.");
-        }
-      });
+  query.send(function (response) {
+    if (response.isError()) {
+      console.error("Error al obtener datos: " + response.getMessage());
+      return;
     }
+
+    const data = response.getDataTable();
+    const numFilas = data.getNumberOfRows();
+    console.log("Filas detectadas:", numFilas);
+
+    if (numFilas === 0) {
+      console.warn("No hay datos en la hoja.");
+      return;
+    }
+
+    const i = numFilas - 1;
+    const fecha = data.getValue(i, 0);
+    const hora = data.getValue(i, 1);
+    const lat = parseFloat(data.getValue(i, 2));
+    const lng = parseFloat(data.getValue(i, 3));
+
+    console.log("Datos de la última fila:", fecha, hora, lat, lng);
+
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const posicion = { lat, lng };
+      mapa.setCenter(posicion);
+
+      new google.maps.Marker({
+        position: posicion,
+        map: mapa,
+        title: `${fecha} ${hora}`,
+      });
+    } else {
+      console.warn("Latitud o longitud inválida:", lat, lng);
+    }
+  });
+}
   </script>
 </body>
 </html>
