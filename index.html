@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mapa desde Google Sheets</title>
+  <title>Mapa en Tiempo Real</title>
   <style>
     #map {
       height: 500px;
@@ -12,21 +12,24 @@
   </style>
 </head>
 <body>
-  <h1>Última Ubicación Registrada</h1>
+  <h1>Ubicación Actualizada en Tiempo Real</h1>
   <div id="map"></div>
 
-  <!-- Librería Google Charts para consultar Google Sheets -->
+  <!-- Google Charts para consultar la Sheet -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
-  <!-- Google Maps API (Reemplaza TU_API_KEY con tu clave real) -->
+  <!-- Google Maps API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho" async defer></script>
 
   <script>
     let mapa;
+    let marcador;
 
-    // Cargar Google Charts
+    // Reemplaza por tu ID de hoja
+    const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
+    const nombreHoja = "Ubicacion";
+
     google.charts.load('current', { packages: ['corechart'] });
-
     google.charts.setOnLoadCallback(inicializar);
 
     function waitForGoogleMaps(callback) {
@@ -40,59 +43,51 @@
     function inicializar() {
       waitForGoogleMaps(() => {
         mapa = new google.maps.Map(document.getElementById("map"), {
-          zoom: 14,
-          center: { lat: 19.4326, lng: -99.1332 } // Centro temporal (CDMX)
+          zoom: 15,
+          center: { lat: 0, lng: 0 }
         });
 
-        cargarUltimaUbicacion();
+        // Carga inicial
+        cargarUbicacion();
+
+        // Actualiza cada 10 segundos
+        setInterval(cargarUbicacion, 10000);
       });
     }
 
-    function cargarUltimaUbicacion() {
-      // REEMPLAZA con el ID de tu Google Sheet (NO el de publicación)
-      const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
+    function cargarUbicacion() {
+      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja}`;
 
-      // Nombre exacto de la hoja dentro del archivo
-      const nombreHoja = "Ubicacion";
-
-      // Crear la URL de consulta
-      const urlQuery = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja}`;
-
-      // Hacer la consulta
-      const query = new google.visualization.Query(urlQuery);
+      const query = new google.visualization.Query(url);
       query.send(response => {
         if (response.isError()) {
-          console.error("Error en la consulta: " + response.getMessage());
-          alert("Error al consultar la hoja. Verifica que esté compartida correctamente.");
+          console.error("Error al cargar datos: ", response.getMessage());
           return;
         }
 
         const data = response.getDataTable();
-        const numFilas = data.getNumberOfRows();
-        if (numFilas === 0) {
-          alert("No hay datos en la hoja.");
-          return;
-        }
+        const ultimaFila = data.getNumberOfRows() - 1;
 
-        const ultimaFila = numFilas - 1;
         const fecha = data.getValue(ultimaFila, 0);
         const hora = data.getValue(ultimaFila, 1);
         const lat = parseFloat(data.getValue(ultimaFila, 2));
         const lng = parseFloat(data.getValue(ultimaFila, 3));
 
-        if (isNaN(lat) || isNaN(lng)) {
-          alert("Latitud o longitud inválida.");
-          return;
+        const nuevaPosicion = { lat, lng };
+
+        // Actualizar centro del mapa
+        mapa.setCenter(nuevaPosicion);
+
+        // Si ya existe marcador, solo se mueve
+        if (marcador) {
+          marcador.setPosition(nuevaPosicion);
+        } else {
+          marcador = new google.maps.Marker({
+            position: nuevaPosicion,
+            map: mapa,
+            title: `Última actualización: ${fecha} ${hora}`
+          });
         }
-
-        const posicion = { lat, lng };
-        mapa.setCenter(posicion);
-
-        new google.maps.Marker({
-          position: posicion,
-          map: mapa,
-          title: `Fecha: ${fecha} - Hora: ${hora}`
-        });
       });
     }
   </script>
