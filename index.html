@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Última Ubicación en Mapa</title>
+  <title>Mapa con Datos de Google Sheets</title>
   <style>
     #map {
       height: 500px;
@@ -15,68 +15,89 @@
   <h1>Última Ubicación Registrada</h1>
   <div id="map"></div>
 
-  <!-- Cargar API de Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap" async defer></script>
-
-  <!-- Google Charts para acceder a Google Sheets -->
+  <!-- 1. Google Charts para consulta Google Sheets -->
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <!-- 2. Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho" async defer></script>
 
   <script>
     let mapa;
 
-    function initMap() {
-      const centroInicial = { lat: 19.4326, lng: -99.1332 }; // Centro provisional
-      mapa = new google.maps.Map(document.getElementById("map"), {
-        zoom: 14,
-        center: centroInicial,
+    // Carga la librería Google Charts
+    google.charts.load('current', { packages: ['corechart'] });
+
+    // Espera que ambas librerías estén listas para iniciar
+    google.charts.setOnLoadCallback(inicializar);
+
+    // Espera que Google Maps esté cargado antes de continuar
+    function waitForGoogleMaps(callback) {
+      if (typeof google === 'object' && typeof google.maps === 'object') {
+        callback();
+      } else {
+        setTimeout(() => waitForGoogleMaps(callback), 100);
+      }
+    }
+
+    function inicializar() {
+      waitForGoogleMaps(() => {
+        // Crear mapa con centro provisional
+        mapa = new google.maps.Map(document.getElementById("map"), {
+          zoom: 14,
+          center: { lat: 19.4326, lng: -99.1332 }, // CDMX centro provisional
+        });
+
+        cargarUltimaUbicacion();
       });
-
-      cargarUltimaUbicacion();
     }
 
-function cargarUltimaUbicacion() {
-  const sheetID = "TU_ID_DE_HOJA"; // <-- Reemplaza
-  const query = new google.visualization.Query(
-    `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=Ubicacion`
-  );
+    function cargarUltimaUbicacion() {
+      const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";  // Aquí pones el ID real de tu hoja
 
-  query.send(function (response) {
-    if (response.isError()) {
-      console.error("Error al obtener datos: " + response.getMessage());
-      return;
-    }
+      const query = new google.visualization.Query(
+        `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=Ubicacion`
+      );
 
-    const data = response.getDataTable();
-    const numFilas = data.getNumberOfRows();
-    console.log("Filas detectadas:", numFilas);
+      query.send(response => {
+        if (response.isError()) {
+          console.error("Error al obtener datos: " + response.getMessage());
+          return;
+        }
 
-    if (numFilas === 0) {
-      console.warn("No hay datos en la hoja.");
-      return;
-    }
+        const data = response.getDataTable();
+        const numFilas = data.getNumberOfRows();
+        console.log("Filas obtenidas:", numFilas);
 
-    const i = numFilas - 1;
-    const fecha = data.getValue(i, 0);
-    const hora = data.getValue(i, 1);
-    const lat = parseFloat(data.getValue(i, 2));
-    const lng = parseFloat(data.getValue(i, 3));
+        if (numFilas === 0) {
+          alert("No hay datos en la hoja 'Ubicacion'");
+          return;
+        }
 
-    console.log("Datos de la última fila:", fecha, hora, lat, lng);
+        // Tomar la última fila (última ubicación)
+        const i = numFilas - 1;
 
-    if (!isNaN(lat) && !isNaN(lng)) {
-      const posicion = { lat, lng };
-      mapa.setCenter(posicion);
+        const fecha = data.getValue(i, 0);
+        const hora = data.getValue(i, 1);
+        const lat = parseFloat(data.getValue(i, 2));
+        const lng = parseFloat(data.getValue(i, 3));
 
-      new google.maps.Marker({
-        position: posicion,
-        map: mapa,
-        title: `${fecha} ${hora}`,
+        console.log("Última ubicación:", fecha, hora, lat, lng);
+
+        if (isNaN(lat) || isNaN(lng)) {
+          alert("Latitud o longitud inválidas en la última fila");
+          return;
+        }
+
+        const posicion = { lat, lng };
+        mapa.setCenter(posicion);
+
+        new google.maps.Marker({
+          position: posicion,
+          map: mapa,
+          title: `Fecha: ${fecha} Hora: ${hora}`
+        });
       });
-    } else {
-      console.warn("Latitud o longitud inválida:", lat, lng);
     }
-  });
-}
   </script>
 </body>
 </html>
