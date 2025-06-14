@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mapa con Google Maps API</title>
+  <title>Última Ubicación en Mapa</title>
   <style>
-    /* Estilo para el recuadro del mapa */
     #map {
       height: 500px;
       width: 100%;
@@ -13,32 +12,66 @@
   </style>
 </head>
 <body>
-  <h1>Mi Mapa de Google</h1>
+  <h1>Última Ubicación Registrada</h1>
   <div id="map"></div>
 
-  <!-- Cargar el API de Google Maps con tu API KEY -->
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap"
-    async defer>
-  </script>
+  <!-- Cargar API de Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBoW_q97JAwyylGNUKcjuO74arOu8hqeho&callback=initMap" async defer></script>
+
+  <!-- Google Charts para acceder a Google Sheets -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
   <script>
-    // Función de inicialización del mapa
-    function initMap() {
-      // Coordenadas del centro del mapa (puedes cambiarlas)
-      const centro = { lat: -34.6037, lng: -58.3816 }; // Ej: Buenos Aires
+    let mapa;
 
-      // Crear el mapa
-      const mapa = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: centro,
+    function initMap() {
+      const centroInicial = { lat: 19.4326, lng: -99.1332 }; // Centro provisional
+      mapa = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: centroInicial,
       });
 
-      // Agregar un marcador
-      const marcador = new google.maps.Marker({
-        position: centro,
-        map: mapa,
-        title: "Ubicación central",
+      cargarUltimaUbicacion();
+    }
+
+    function cargarUltimaUbicacion() {
+      const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw"; // <--- Sustituye por el ID de tu hoja de cálculo
+      const query = new google.visualization.Query(
+        `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=Ubicacion`
+      );
+
+      query.send(function (response) {
+        if (response.isError()) {
+          console.error("Error al obtener datos: " + response.getMessage());
+          return;
+        }
+
+        const data = response.getDataTable();
+        const numFilas = data.getNumberOfRows();
+
+        if (numFilas === 0) {
+          console.warn("No hay datos en la hoja.");
+          return;
+        }
+
+        const i = numFilas - 1; // Última fila
+        const fecha = data.getValue(i, 0);
+        const hora = data.getValue(i, 1);
+        const lat = parseFloat(data.getValue(i, 2));
+        const lng = parseFloat(data.getValue(i, 3));
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const posicion = { lat, lng };
+          mapa.setCenter(posicion);
+
+          new google.maps.Marker({
+            position: posicion,
+            map: mapa,
+            title: `${fecha} ${hora}`,
+          });
+        } else {
+          console.warn("Latitud o longitud inválida.");
+        }
       });
     }
   </script>
