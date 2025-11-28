@@ -9,10 +9,34 @@
       border: 2px solid #000;
       border-radius: 10px;
     }
+
+    /* ---- AÑADIDO: estilo del selector de dispositivo ---- */
+    #selector-dispositivo {
+      margin-bottom: 10px;
+    }
+
+    #selector-dispositivo button {
+      margin-right: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+
+    #estado-dispositivo {
+      font-weight: bold;
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
   <h1>Ubicación en Tiempo Real</h1>
+
+  <!-- AÑADIDO: botones para elegir hoja / dispositivo -->
+  <div id="selector-dispositivo">
+    <button onclick="seleccionarDispositivo(1)">Dispositivo 1</button>
+    <button onclick="seleccionarDispositivo(2)">Dispositivo 2</button>
+    <span id="estado-dispositivo">Mostrando: Dispositivo 1</span>
+  </div>
+
   <div id="map"></div>
 
   <!-- Google Charts para consultar la Sheet -->
@@ -27,7 +51,13 @@
 
     // Reemplaza por tu ID de hoja
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
-    const nombreHoja = "Ubicacion";
+    // const nombreHoja = "Ubicacion";  // línea original, ya no se usa directamente
+
+    // ===== AÑADIDO: nombres de las dos hojas =====
+    const nombreHoja1 = "Ubicacion";   // Dispositivo 1
+    const nombreHoja2 = "ubicacion2";  // Dispositivo 2
+    let hojaActual = nombreHoja1;      // por defecto
+    // =============================================
 
     google.charts.load('current', { packages: ['corechart'] });
     google.charts.setOnLoadCallback(inicializar);
@@ -50,13 +80,40 @@
         // Carga inicial
         cargarUbicacion();
 
-        // Actualiza cada 10 segundos
+        // Actualiza cada 2 segundos
         setInterval(cargarUbicacion, 2000);
+
+        // Actualiza el texto del dispositivo actual
+        actualizarEtiqueta();
       });
     }
 
+    // ===== AÑADIDO: cambiar entre Dispositivo 1 y 2 =====
+    function seleccionarDispositivo(num) {
+      if (num === 1) {
+        hojaActual = nombreHoja1;
+      } else {
+        hojaActual = nombreHoja2;
+      }
+      actualizarEtiqueta();
+      // refresca inmediatamente con la nueva hoja
+      cargarUbicacion();
+    }
+
+    function actualizarEtiqueta() {
+      const label = document.getElementById('estado-dispositivo');
+      if (!label) return;
+      if (hojaActual === nombreHoja1) {
+        label.textContent = "Mostrando: Dispositivo 1";
+      } else {
+        label.textContent = "Mostrando: Dispositivo 2";
+      }
+    }
+    // =====================================================
+
     function cargarUbicacion() {
-      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja}`;
+      // Antes se usaba "nombreHoja", ahora usamos "hojaActual"
+      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${encodeURIComponent(hojaActual)}`;
 
       const query = new google.visualization.Query(url);
       query.send(response => {
@@ -81,6 +138,7 @@
         // Si ya existe marcador, solo se mueve
         if (marcador) {
           marcador.setPosition(nuevaPosicion);
+          marcador.setTitle(`Última actualización: ${fecha} ${hora}`);
         } else {
           marcador = new google.maps.Marker({
             position: nuevaPosicion,
@@ -89,6 +147,11 @@
           });
         }
       });
+    }
+  </script>
+</body>
+</html>
+
     }
   </script>
 </body>
