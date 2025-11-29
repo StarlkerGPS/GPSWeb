@@ -6,30 +6,37 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 10px 20px;
     }
 
     h1 {
+      margin: 0 0 10px 0;
+    }
+
+    /* Barra superior: botones + texto */
+    #topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 10px;
     }
 
-    #controles {
-      margin-bottom: 10px;
-    }
-
-    #controles button {
-      padding: 8px 16px;
-      margin-right: 8px;
+    #topbar button {
+      padding: 6px 14px;
       border: 1px solid #333;
-      border-radius: 6px;
+      border-radius: 4px;
       background: #f0f0f0;
       cursor: pointer;
       font-weight: bold;
     }
 
-    #controles button.activo {
+    #topbar button.activo {
       background: #4CAF50;
       color: #fff;
+    }
+
+    #info {
+      font-size: 14px;
     }
 
     #map {
@@ -38,23 +45,18 @@
       border: 2px solid #000;
       border-radius: 10px;
     }
-
-    #info {
-      margin-top: 8px;
-      font-size: 14px;
-    }
   </style>
 </head>
 <body>
   <h1>Ubicación en Tiempo Real</h1>
 
-  <div id="controles">
+  <div id="topbar">
     <button id="btn1">Dispositivo 1</button>
     <button id="btn2">Dispositivo 2</button>
+    <span id="info">Mostrando: Dispositivo 1</span>
   </div>
 
   <div id="map"></div>
-  <div id="info">Mostrando: Dispositivo 1</div>
 
   <!-- Google Charts para consultar la Sheet -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
@@ -67,7 +69,7 @@
     let marcador;
     let dispositivoActual = 1; // 1 o 2
 
-    // ID del archivo y nombre de la hoja (una sola)
+    // Una sola hoja: Ubicacion
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
     const nombreHoja = "Ubicacion";
 
@@ -89,30 +91,25 @@
           center: { lat: 0, lng: 0 }
         });
 
-        // Eventos de botones
         document.getElementById('btn1').addEventListener('click', () => {
           dispositivoActual = 1;
-          actualizarBotones();
+          actualizarUI();
           cargarUbicacion();
         });
 
         document.getElementById('btn2').addEventListener('click', () => {
           dispositivoActual = 2;
-          actualizarBotones();
+          actualizarUI();
           cargarUbicacion();
         });
 
-        actualizarBotones();
-
-        // Carga inicial
+        actualizarUI();
         cargarUbicacion();
-
-        // Actualiza cada 2 segundos
         setInterval(cargarUbicacion, 2000);
       });
     }
 
-    function actualizarBotones() {
+    function actualizarUI() {
       const btn1 = document.getElementById('btn1');
       const btn2 = document.getElementById('btn2');
       const info = document.getElementById('info');
@@ -141,8 +138,7 @@
           return;
         }
 
-        // Buscar la ÚLTIMA fila que coincida con el dispositivoActual
-        // Columnas:
+        // Columnas en la hoja:
         // 0 -> Fecha
         // 1 -> Hora
         // 2 -> Latitud
@@ -174,10 +170,8 @@
 
         const nuevaPosicion = { lat, lng };
 
-        // Actualizar centro del mapa
         mapa.setCenter(nuevaPosicion);
 
-        // Si ya existe marcador, solo se mueve
         if (marcador) {
           marcador.setPosition(nuevaPosicion);
           marcador.setTitle(`Dispositivo ${dispositivoActual} - Última actualización: ${fecha} ${hora}`);
