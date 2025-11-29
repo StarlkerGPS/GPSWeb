@@ -2,59 +2,29 @@
 <html>
 <head>
   <title>Mapa en Tiempo Real</title>
-  <meta charset="UTF-8">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-
-    h1 {
-      margin-bottom: 10px;
-    }
-
-    #controles {
-      margin-bottom: 10px;
-    }
-
-    #controles button {
-      padding: 8px 16px;
-      margin-right: 8px;
-      border: 1px solid #333;
-      border-radius: 6px;
-      background: #f0f0f0;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #controles button.activo {
-      background: #4CAF50;
-      color: #fff;
-    }
-
     #map {
       height: 500px;
       width: 100%;
       border: 2px solid #000;
       border-radius: 10px;
     }
-
-    #info {
-      margin-top: 8px;
-      font-size: 14px;
+    /* Opcional: separar tantito los botones del mapa */
+    #controles {
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <h1>Ubicación en Tiempo Real</h1>
 
+  <!-- Controles para elegir dispositivo -->
   <div id="controles">
-    <button id="btn1">Dispositivo 1</button>
-    <button id="btn2">Dispositivo 2</button>
+    <button onclick="setDispositivo(1)">Dispositivo 1</button>
+    <button onclick="setDispositivo(2)">Dispositivo 2</button>
   </div>
 
   <div id="map"></div>
-  <div id="info">Mostrando: Dispositivo 1</div>
 
   <!-- Google Charts para consultar la Sheet -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
@@ -67,7 +37,7 @@
     let marcador;
     let dispositivoActual = 1; // 1 o 2
 
-    // ID del archivo y nombre de la hoja (una sola)
+    // ID de la hoja y nombre de la pestaña (una sola hoja)
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
     const nombreHoja = "Ubicacion";
 
@@ -89,21 +59,6 @@
           center: { lat: 0, lng: 0 }
         });
 
-        // Eventos de botones
-        document.getElementById('btn1').addEventListener('click', () => {
-          dispositivoActual = 1;
-          actualizarBotones();
-          cargarUbicacion();
-        });
-
-        document.getElementById('btn2').addEventListener('click', () => {
-          dispositivoActual = 2;
-          actualizarBotones();
-          cargarUbicacion();
-        });
-
-        actualizarBotones();
-
         // Carga inicial
         cargarUbicacion();
 
@@ -112,15 +67,10 @@
       });
     }
 
-    function actualizarBotones() {
-      const btn1 = document.getElementById('btn1');
-      const btn2 = document.getElementById('btn2');
-      const info = document.getElementById('info');
-
-      btn1.classList.toggle('activo', dispositivoActual === 1);
-      btn2.classList.toggle('activo', dispositivoActual === 2);
-
-      info.textContent = "Mostrando: Dispositivo " + dispositivoActual;
+    // Cambiar de dispositivo desde los botones
+    function setDispositivo(num) {
+      dispositivoActual = num;
+      cargarUbicacion();
     }
 
     function cargarUbicacion() {
@@ -147,7 +97,7 @@
         // 1 -> Hora
         // 2 -> Lat
         // 3 -> Lon
-        // 4 -> Dispositivo (1 ó 2)
+        // 4 -> Dispositivo
         let filaSeleccionada = -1;
         for (let i = numFilas - 1; i >= 0; i--) {
           const deviceValue = data.getValue(i, 4); // columna E
@@ -166,11 +116,6 @@
         const hora  = data.getValue(filaSeleccionada, 1);
         const lat   = parseFloat(data.getValue(filaSeleccionada, 2));
         const lng   = parseFloat(data.getValue(filaSeleccionada, 3));
-
-        if (!isFinite(lat) || !isFinite(lng)) {
-          console.error("Lat/Lon inválidos: ", lat, lng);
-          return;
-        }
 
         const nuevaPosicion = { lat, lng };
 
