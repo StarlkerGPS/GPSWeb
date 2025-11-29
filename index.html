@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mapa en Tiempo Real</title>
+  <title>Mapa en Tiempo Real</title>
   <style>
     #map {
       height: 500px;
@@ -10,21 +10,14 @@
       border-radius: 10px;
     }
 
-
-    h1 {
-      margin: 0 0 10px 0;
-    }
-
-    /* Barra superior: botones + texto */
+    /* Barra superior con los botones */
     #topbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
       margin-bottom: 10px;
     }
 
     #topbar button {
       padding: 6px 14px;
+      margin-right: 6px;
       border: 1px solid #333;
       border-radius: 4px;
       background: #f0f0f0;
@@ -36,26 +29,15 @@
       background: #4CAF50;
       color: #fff;
     }
-
-    #info {
-      font-size: 14px;
-    }
-
-    #map {
-      height: 500px;
-      width: 100%;
-      border: 2px solid #000;
-      border-radius: 10px;
-    }
   </style>
 </head>
 <body>
   <h1>Ubicación en Tiempo Real</h1>
 
+  <!-- Botones para elegir dispositivo -->
   <div id="topbar">
     <button id="btn1">Dispositivo 1</button>
     <button id="btn2">Dispositivo 2</button>
-    <span id="info">Mostrando: Dispositivo 1</span>
   </div>
 
   <div id="map"></div>
@@ -69,9 +51,11 @@
   <script>
     let mapa;
     let marcador;
-    let dispositivoActual = 1; // 1 o 2
 
-    // Una sola hoja: Ubicacion
+    // Dispositivo seleccionado (1 o 2)
+    let dispositivoActual = 1;
+
+    // Reemplaza por tu ID de hoja
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
     const nombreHoja = "Ubicacion";
 
@@ -93,33 +77,35 @@
           center: { lat: 0, lng: 0 }
         });
 
+        // Eventos de los botones
         document.getElementById('btn1').addEventListener('click', () => {
           dispositivoActual = 1;
-          actualizarUI();
+          actualizarBotones();
           cargarUbicacion();
         });
 
         document.getElementById('btn2').addEventListener('click', () => {
           dispositivoActual = 2;
-          actualizarUI();
+          actualizarBotones();
           cargarUbicacion();
         });
 
-        actualizarUI();
+        actualizarBotones();
+
+        // Carga inicial
         cargarUbicacion();
+
+        // Actualiza cada 2 segundos
         setInterval(cargarUbicacion, 2000);
       });
     }
 
-    function actualizarUI() {
+    function actualizarBotones() {
       const btn1 = document.getElementById('btn1');
       const btn2 = document.getElementById('btn2');
-      const info = document.getElementById('info');
 
       btn1.classList.toggle('activo', dispositivoActual === 1);
       btn2.classList.toggle('activo', dispositivoActual === 2);
-
-      info.textContent = "Mostrando: Dispositivo " + dispositivoActual;
     }
 
     function cargarUbicacion() {
@@ -140,12 +126,14 @@
           return;
         }
 
-        // Columnas en la hoja:
+        // Columnas:
         // 0 -> Fecha
         // 1 -> Hora
         // 2 -> Latitud
         // 3 -> Longitud
         // 4 -> Dispositivo (1 ó 2)
+
+        // Buscar la ÚLTIMA fila que tenga el dispositivo seleccionado
         let filaSeleccionada = -1;
         for (let i = numFilas - 1; i >= 0; i--) {
           const deviceValue = data.getValue(i, 4); // columna E
@@ -165,15 +153,12 @@
         const lat   = parseFloat(data.getValue(filaSeleccionada, 2));
         const lng   = parseFloat(data.getValue(filaSeleccionada, 3));
 
-        if (!isFinite(lat) || !isFinite(lng)) {
-          console.error("Lat/Lon inválidos: ", lat, lng);
-          return;
-        }
-
         const nuevaPosicion = { lat, lng };
 
+        // Actualizar centro del mapa
         mapa.setCenter(nuevaPosicion);
 
+        // Si ya existe marcador, solo se mueve
         if (marcador) {
           marcador.setPosition(nuevaPosicion);
           marcador.setTitle(`Dispositivo ${dispositivoActual} - Última actualización: ${fecha} ${hora}`);
