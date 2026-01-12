@@ -9,51 +9,21 @@
       border: 2px solid #000;
       border-radius: 10px;
     }
-
-    /* Barra superior con los botones */
-    #topbar {
-      margin-bottom: 10px;
-    }
-
-    #topbar button {
-      padding: 6px 14px;
-      margin-right: 6px;
-      border: 1px solid #333;
-      border-radius: 4px;
-      background: #f0f0f0;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    #topbar button.activo {
-      background: #4CAF50;
-      color: #fff;
-    }
   </style>
 </head>
 <body>
   <h1>Ubicación en Tiempo Real</h1>
-
-  <!-- Botones para elegir dispositivo -->
-  <div id="topbar">
-    <button id="btn1">Dispositivo 1</button>
-    <button id="btn2">Dispositivo 2</button>
-  </div>
-
   <div id="map"></div>
 
   <!-- Google Charts para consultar la Sheet -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPFswYN5k_DJXBL5b5wr7Jy_Tk4ZoaSIU" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALU-wjQnsdJQDoY8tCsgYU_ShmNG9EGu4" async defer></script>
 
   <script>
     let mapa;
     let marcador;
-
-    // Dispositivo seleccionado (1 o 2)
-    let dispositivoActual = 1;
 
     // Reemplaza por tu ID de hoja
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
@@ -77,39 +47,16 @@
           center: { lat: 0, lng: 0 }
         });
 
-        // Eventos de los botones
-        document.getElementById('btn1').addEventListener('click', () => {
-          dispositivoActual = 1;
-          actualizarBotones();
-          cargarUbicacion();
-        });
-
-        document.getElementById('btn2').addEventListener('click', () => {
-          dispositivoActual = 2;
-          actualizarBotones();
-          cargarUbicacion();
-        });
-
-        actualizarBotones();
-
         // Carga inicial
         cargarUbicacion();
 
-        // Actualiza cada 2 segundos
+        // Actualiza cada 10 segundos
         setInterval(cargarUbicacion, 2000);
       });
     }
 
-    function actualizarBotones() {
-      const btn1 = document.getElementById('btn1');
-      const btn2 = document.getElementById('btn2');
-
-      btn1.classList.toggle('activo', dispositivoActual === 1);
-      btn2.classList.toggle('activo', dispositivoActual === 2);
-    }
-
     function cargarUbicacion() {
-      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja}`;
+      const url = https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja};
 
       const query = new google.visualization.Query(url);
       query.send(response => {
@@ -119,39 +66,12 @@
         }
 
         const data = response.getDataTable();
-        const numFilas = data.getNumberOfRows();
+        const ultimaFila = data.getNumberOfRows() - 1;
 
-        if (numFilas === 0) {
-          console.warn("La hoja está vacía");
-          return;
-        }
-
-        // Columnas:
-        // 0 -> Fecha
-        // 1 -> Hora
-        // 2 -> Latitud
-        // 3 -> Longitud
-        // 4 -> Dispositivo (1 ó 2)
-
-        // Buscar la ÚLTIMA fila que tenga el dispositivo seleccionado
-        let filaSeleccionada = -1;
-        for (let i = numFilas - 1; i >= 0; i--) {
-          const deviceValue = data.getValue(i, 4); // columna E
-          if (String(deviceValue) === String(dispositivoActual)) {
-            filaSeleccionada = i;
-            break;
-          }
-        }
-
-        if (filaSeleccionada === -1) {
-          console.warn("No hay filas para el dispositivo " + dispositivoActual);
-          return;
-        }
-
-        const fecha = data.getValue(filaSeleccionada, 0);
-        const hora  = data.getValue(filaSeleccionada, 1);
-        const lat   = parseFloat(data.getValue(filaSeleccionada, 2));
-        const lng   = parseFloat(data.getValue(filaSeleccionada, 3));
+        const fecha = data.getValue(ultimaFila, 0);
+        const hora = data.getValue(ultimaFila, 1);
+        const lat = parseFloat(data.getValue(ultimaFila, 2));
+        const lng = parseFloat(data.getValue(ultimaFila, 3));
 
         const nuevaPosicion = { lat, lng };
 
@@ -161,12 +81,11 @@
         // Si ya existe marcador, solo se mueve
         if (marcador) {
           marcador.setPosition(nuevaPosicion);
-          marcador.setTitle(`Dispositivo ${dispositivoActual} - Última actualización: ${fecha} ${hora}`);
         } else {
           marcador = new google.maps.Marker({
             position: nuevaPosicion,
             map: mapa,
-            title: `Dispositivo ${dispositivoActual} - Última actualización: ${fecha} ${hora}`
+            title: Última actualización: ${fecha} ${hora}
           });
         }
       });
