@@ -19,7 +19,7 @@
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDPFswYN5k_DJXBL5b5wr7Jy_Tk4ZoaSIU" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALU-wjQnsdJQDoY8tCsgYU_ShmNG9EGu4" async defer></script>
 
   <script>
     let mapa;
@@ -56,7 +56,7 @@
     }
 
     function cargarUbicacion() {
-      const url = https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja};
+      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja}`;
 
       const query = new google.visualization.Query(url);
       query.send(response => {
@@ -85,7 +85,7 @@
           marcador = new google.maps.Marker({
             position: nuevaPosicion,
             map: mapa,
-            title: Última actualización: ${fecha} ${hora}
+            title: `Última actualización: ${fecha} ${hora}`
           });
         }
       });
