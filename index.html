@@ -1,9 +1,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mapa en Tiempo Real</title>
+  <title>Mapa en Tiempo Real (2 pestañas)</title>
   <style>
-    #map {
+    body { font-family: Arial, sans-serif; margin: 16px; }
+
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+    .tab-btn {
+      padding: 10px 14px; border: 1px solid #ccc; background: #f5f5f5;
+      cursor: pointer; border-radius: 8px;
+    }
+    .tab-btn.active { background: #e9e9e9; border-color: #999; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .map {
       height: 500px;
       width: 100%;
       border: 2px solid #000;
@@ -11,9 +23,24 @@
     }
   </style>
 </head>
+
 <body>
   <h1>Ubicación en Tiempo Real</h1>
-  <div id="map"></div>
+
+  <!-- Pestañas -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab1">Mapa 1</button>
+    <button class="tab-btn" data-tab="tab2">Mapa 2</button>
+  </div>
+
+  <!-- Paneles -->
+  <div id="tab1" class="tab-panel active">
+    <div id="map1" class="map"></div>
+  </div>
+
+  <div id="tab2" class="tab-panel">
+    <div id="map2" class="map"></div>
+  </div>
 
   <!-- Google Charts para consultar la Sheet -->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
@@ -22,12 +49,20 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALU-wjQnsdJQDoY8tCsgYU_ShmNG9EGu4" async defer></script>
 
   <script>
-    let mapa;
-    let marcador;
+    // ==================== MAPAS / MARCADORES ====================
+    let mapa1, mapa2;
+    let marcador1, marcador2;
 
     // Reemplaza por tu ID de hoja
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
     const nombreHoja = "Ubicacion";
+
+    // Índices de columnas (AJUSTA si cambias el orden)
+    const colFecha = 0;
+    const colHora  = 1;
+    const colLat   = 2;
+    const colLng   = 3;
+    const colMapa  = 4; // <-- NUEVA COLUMNA: 1 o 2
 
     google.charts.load('current', { packages: ['corechart'] });
     google.charts.setOnLoadCallback(inicializar);
@@ -42,7 +77,13 @@
 
     function inicializar() {
       waitForGoogleMaps(() => {
-        mapa = new google.maps.Map(document.getElementById("map"), {
+        // Inicializa ambos mapas (uno puede estar oculto, luego hacemos resize al abrir tab)
+        mapa1 = new google.maps.Map(document.getElementById("map1"), {
+          zoom: 15,
+          center: { lat: 0, lng: 0 }
+        });
+
+        mapa2 = new google.maps.Map(document.getElementById("map2"), {
           zoom: 15,
           center: { lat: 0, lng: 0 }
         });
@@ -50,11 +91,30 @@
         // Carga inicial
         cargarUbicacion();
 
-        // Actualiza cada 10 segundos
+        // Actualiza cada 2 segundos (en tu comentario decía 10s, pero tú tienes 2000ms)
         setInterval(cargarUbicacion, 2000);
       });
     }
 
+    // ==================== TABS ====================
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+
+        btn.classList.add("active");
+        const tabId = btn.dataset.tab;
+        document.getElementById(tabId).classList.add("active");
+
+        // Importantísimo: “resize” para que el mapa se dibuje bien al mostrarse
+        setTimeout(() => {
+          if (tabId === "tab1" && mapa1) google.maps.event.trigger(mapa1, "resize");
+          if (tabId === "tab2" && mapa2) google.maps.event.trigger(mapa2, "resize");
+        }, 50);
+      });
+    });
+
+    // ==================== CARGA DE DATOS ====================
     function cargarUbicacion() {
       const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?sheet=${nombreHoja}`;
 
@@ -67,28 +127,56 @@
 
         const data = response.getDataTable();
         const ultimaFila = data.getNumberOfRows() - 1;
+        if (ultimaFila < 0) return;
 
-        const fecha = data.getValue(ultimaFila, 0);
-        const hora = data.getValue(ultimaFila, 1);
-        const lat = parseFloat(data.getValue(ultimaFila, 2));
-        const lng = parseFloat(data.getValue(ultimaFila, 3));
+        const fecha = data.getValue(ultimaFila, colFecha);
+        const hora  = data.getValue(ultimaFila, colHora);
+        const lat   = parseFloat(data.getValue(ultimaFila, colLat));
+        const lng   = parseFloat(data.getValue(ultimaFila, colLng));
+
+        // NUEVO: columna que decide a qué mapa va (1 o 2)
+        const mapaDestinoRaw = data.getValue(ultimaFila, colMapa);
+        const mapaDestino = parseInt(mapaDestinoRaw, 10);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+          console.warn("Lat/Lng inválidos:", lat, lng);
+          return;
+        }
+
+        if (mapaDestino !== 1 && mapaDestino !== 2) {
+          console.warn("Valor de mapa inválido (debe ser 1 o 2):", mapaDestinoRaw);
+          return;
+        }
 
         const nuevaPosicion = { lat, lng };
+        const titulo = `Última actualización: ${fecha} ${hora}`;
 
-        // Actualizar centro del mapa
-        mapa.setCenter(nuevaPosicion);
-
-        // Si ya existe marcador, solo se mueve
-        if (marcador) {
-          marcador.setPosition(nuevaPosicion);
+        if (mapaDestino === 1) {
+          actualizarMapa(mapa1, "1", nuevaPosicion, titulo);
         } else {
-          marcador = new google.maps.Marker({
-            position: nuevaPosicion,
-            map: mapa,
-            title: `Última actualización: ${fecha} ${hora}`
-          });
+          actualizarMapa(mapa2, "2", nuevaPosicion, titulo);
         }
       });
+    }
+
+    function actualizarMapa(mapa, cual, pos, titulo) {
+      mapa.setCenter(pos);
+
+      if (cual === "1") {
+        if (marcador1) {
+          marcador1.setPosition(pos);
+          marcador1.setTitle(titulo);
+        } else {
+          marcador1 = new google.maps.Marker({ position: pos, map: mapa, title: titulo });
+        }
+      } else {
+        if (marcador2) {
+          marcador2.setPosition(pos);
+          marcador2.setTitle(titulo);
+        } else {
+          marcador2 = new google.maps.Marker({ position: pos, map: mapa, title: titulo });
+        }
+      }
     }
   </script>
 </body>
