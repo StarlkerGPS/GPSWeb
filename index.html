@@ -29,8 +29,8 @@
 
   <!-- Pestañas -->
   <div class="tabs">
-    <button class="tab-btn active" data-tab="tab1">Mapa 1</button>
-    <button class="tab-btn" data-tab="tab2">Mapa 2</button>
+    <button class="tab-btn active" data-tab="tab1">Dispositivo 1</button>
+    <button class="tab-btn" data-tab="tab2">Dispositivo 2</button>
   </div>
 
   <!-- Paneles -->
@@ -42,21 +42,21 @@
     <div id="map2" class="map"></div>
   </div>
 
-  //Google Charts para consultar la Sheet
+  <!--Google Charts para consultar la Sheet-->
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
-  //Google Maps API
+  <!--Google Maps API-->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALU-wjQnsdJQDoY8tCsgYU_ShmNG9EGu4" async defer></script>
 
   <script>
-    // ==================== MAPAS / MARCADORES ====================
+    <!--MAPAS / MARCADORES-->
     let mapa1, mapa2;
     let marcador1, marcador2;
 
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
     const nombreHoja = "Ubicacion";
 
-    // Índices de columnas
+    <!--Índices de columnas-->
     const colFecha = 0;
     const colHora  = 1;
     const colLat   = 2;
@@ -87,12 +87,12 @@
         });
         cargarUbicacion();
 
-        // Actualiza cada 2 segundos
+        <!--Actualiza cada 2 segundos-->
         setInterval(cargarUbicacion, 2000);
       });
     }
 
-    // ==================== Pestañas ====================
+    <!--Pestañas-->
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
