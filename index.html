@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mapa en Tiempo Real (2 pestañas)</title>
+  <title>Mapa en Tiempo Real </title>
   <style>
     body { font-family: Arial, sans-serif; margin: 16px; }
 
@@ -42,10 +42,10 @@
     <div id="map2" class="map"></div>
   </div>
 
-  <!-- Google Charts para consultar la Sheet -->
+  //Google Charts para consultar la Sheet
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
-  <!-- Google Maps API -->
+  //Google Maps API
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyALU-wjQnsdJQDoY8tCsgYU_ShmNG9EGu4" async defer></script>
 
   <script>
@@ -53,16 +53,15 @@
     let mapa1, mapa2;
     let marcador1, marcador2;
 
-    // Reemplaza por tu ID de hoja
     const sheetID = "1EjvJRmv4ZsjKvKOunJqgtSs9hs8t00atWNxJbL3F2Uw";
     const nombreHoja = "Ubicacion";
 
-    // Índices de columnas (AJUSTA si cambias el orden)
+    // Índices de columnas
     const colFecha = 0;
     const colHora  = 1;
     const colLat   = 2;
     const colLng   = 3;
-    const colMapa  = 4; // <-- NUEVA COLUMNA: 1 o 2
+    const colMapa  = 4;
 
     google.charts.load('current', { packages: ['corechart'] });
     google.charts.setOnLoadCallback(inicializar);
@@ -77,7 +76,6 @@
 
     function inicializar() {
       waitForGoogleMaps(() => {
-        // Inicializa ambos mapas (uno puede estar oculto, luego hacemos resize al abrir tab)
         mapa1 = new google.maps.Map(document.getElementById("map1"), {
           zoom: 15,
           center: { lat: 0, lng: 0 }
@@ -87,16 +85,14 @@
           zoom: 15,
           center: { lat: 0, lng: 0 }
         });
-
-        // Carga inicial
         cargarUbicacion();
 
-        // Actualiza cada 2 segundos (en tu comentario decía 10s, pero tú tienes 2000ms)
+        // Actualiza cada 2 segundos
         setInterval(cargarUbicacion, 2000);
       });
     }
 
-    // ==================== TABS ====================
+    // ==================== Pestañas ====================
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -106,7 +102,6 @@
         const tabId = btn.dataset.tab;
         document.getElementById(tabId).classList.add("active");
 
-        // Importantísimo: “resize” para que el mapa se dibuje bien al mostrarse
         setTimeout(() => {
           if (tabId === "tab1" && mapa1) google.maps.event.trigger(mapa1, "resize");
           if (tabId === "tab2" && mapa2) google.maps.event.trigger(mapa2, "resize");
@@ -134,7 +129,6 @@
         const lat   = parseFloat(data.getValue(ultimaFila, colLat));
         const lng   = parseFloat(data.getValue(ultimaFila, colLng));
 
-        // NUEVO: columna que decide a qué mapa va (1 o 2)
         const mapaDestinoRaw = data.getValue(ultimaFila, colMapa);
         const mapaDestino = parseInt(mapaDestinoRaw, 10);
 
